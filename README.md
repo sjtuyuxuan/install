@@ -20,19 +20,28 @@ sudo sh -c '. /etc/lsb-release && echo "deb http://mirrors.tuna.tsinghua.edu.cn/
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys F42ED6FBAB17C654
 ```
 
+对于melodic/noetic请分别执行以下命令
+
 ```sh
 sudo apt update
 
 sudo apt-get install ros-melodic-desktop-full
+echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
+echo "source /opt/ros/melodic/setup.zsh" >> ~/.zshrc
+```
+
+```sh
+sudo apt update
+
 sudo apt-get install ros-noetic-desktop-full
+echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
+echo "source /opt/ros/noetic/setup.zsh" >> ~/.zshrc
+```
 
-echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> ~/.bashrc
-echo "source /opt/ros/$ROS_DISTRO/setup.zsh" >> ~/.zshrc
-
+```sh
 source ~/.zshrc
 ```
 
-对于melodic/noetic请分别执行以下命令
 ```sh
 sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
 sudo apt install python-rosdep
@@ -41,7 +50,7 @@ sudo apt install python3-rosdep python3-rosinstall python3-rosinstall-generator 
 sudo apt install python3-rosdep
 ```
 
-```
+```sh
 sudo rosdep init
 rosdep update
 ```
