@@ -32,7 +32,7 @@ echo "source /opt/ros/$ROS_DISTRO/setup.zsh" >> ~/.zshrc
 source ~/.zshrc
 ```
 
-melodic/noetic
+对于melodic/noetic请分别执行以下命令
 ```sh
 sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
 sudo apt install python-rosdep
