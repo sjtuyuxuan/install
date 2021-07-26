@@ -28,6 +28,12 @@ sudo apt update
 sudo apt-get install ros-melodic-desktop-full
 echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
 echo "source /opt/ros/melodic/setup.zsh" >> ~/.zshrc
+
+source ~/.zshrc
+
+sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
+sudo apt install python-rosdep
+
 ```
 
 ```sh
@@ -36,20 +42,14 @@ sudo apt update
 sudo apt-get install ros-noetic-desktop-full
 echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
 echo "source /opt/ros/noetic/setup.zsh" >> ~/.zshrc
-```
 
-```sh
 source ~/.zshrc
-```
-
-```sh
-sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
-sudo apt install python-rosdep
 
 sudo apt install python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential
 sudo apt install python3-rosdep
 ```
 
+最后更新依赖
 ```sh
 sudo rosdep init
 rosdep update
