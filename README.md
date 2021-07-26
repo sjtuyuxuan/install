@@ -1,6 +1,7 @@
-## ZHS && OH_MY_ZSH
+## ZSH && OH_MY_ZSH
 
 ```sh
+sudo apt update
 sudo apt-get install -y zsh curl git
 
 sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
