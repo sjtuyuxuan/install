@@ -5,7 +5,7 @@ use Matlab Camera Calibrator
 save the result into camera_instrinsic.mat
 
 ```matlab
-save('camera_instrinsic')
+save('camera_instrinsic.mat')
 ```
 
 ## Lidar - Camera extrinsic calibration
