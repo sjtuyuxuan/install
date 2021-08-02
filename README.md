@@ -254,8 +254,8 @@ sudo chmod 0666 /dev/ttyUSB0
 ```sh
 sudo apt-get install sharutils
 sudo ./mtsdk_linux-x64_2021.0.sh
-sudo ./mfmsdk_linux-x64_2019.3.2.sh
-ldconfig /usr/local/xsens
+sudo ./mfmsdk_linux-x64_2021.0.sh
+sudo ldconfig /usr/local/xsens
 
 ```
 
@@ -303,7 +303,6 @@ cd ouster_example
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j 4
-cp -r ~/libs/ouster_example/ouster_ros ~/catkin_ws/src/
 ```
 
 ```sh
