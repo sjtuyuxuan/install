@@ -1,3 +1,7 @@
+# Install
+
+文件位于seafile Groups/MPL/MPL/install
+
 ## ZSH && OH_MY_ZSH
 
 ```sh
