@@ -399,7 +399,7 @@ catkin_make
 ### PointGray
 
 #### 安装SDK
-
+解压spinnaker-2.4.0.143-Ubuntu18.04-amd64-pkg.tar.gz
 阅读readme 安装prerequisite
 
 ```sh
