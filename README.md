@@ -61,13 +61,25 @@ rosdep update
 
 ## 输入法
 
-略
+找到文件 sogoupinyin_xxx_amd64.deb (sogoupinyin_2.4.0.3469_amd64.deb)
 
+```sh
+sudo -y apt-get install fcitx
+sudo dpkg -i sogoupinyin_2.4.0.3469_amd64.deb
+sudo apt -f install
+```
+打开语言支持(Language Support) 完成更新 并选择fcitx为默认输入法架构
+
+重启
+点击屏幕右上角键盘选择config input method
+按 + 找到sougoupinyin
+完成配置
 
 
 ## VPN
 
-略
+VPN 下载
+https://storage.monocloud.co/client/Linux/Clash/Clashy-0.2.0.AppImage
 
 
 
@@ -99,23 +111,22 @@ rosdep update
     apt update && \
     apt -y install libgtsam-dev libgtsam-unstable-dev
 
-    apt-get install -y sudo vim && \
-    apt-get install -y ros-$ROS_DISTRO-pcl-conversions && \
-    apt-get install -y ros-$ROS_DISTRO-tf\* && \
-    apt-get install -y ros-$ROS_DISTRO-image-\* && \
-    apt-get install -y ros-$ROS_DISTRO-wfov-camera-msgs
-
     apt-get install -y openssh-server && \
     apt-get install -y tmux && \
+    apt-get install -y sudo vim && \
     apt-get install -y htop
-    
 ```
 
 重开一个终端
-
 ```sh
-echo "set -g mouse on" >> ~/.tmux.conf
+    sudo apt-get install -y ros-$ROS_DISTRO-pcl-conversions && \
+    sudo apt-get install -y ros-$ROS_DISTRO-tf\* && \
+    sudo apt-get install -y ros-$ROS_DISTRO-image-\* && \
+    sudo apt-get install -y ros-$ROS_DISTRO-wfov-camera-msgs
+    
+    echo "set -g mouse on" >> ~/.tmux.conf
 ```
+
 
 一段直接一起复制，其中安装了 eigen pcl opencv ceres gtsam ros-tf 等常用库 不要忘了开始的 sudo su
 
