@@ -433,6 +433,5 @@ cd ~/catkin_ws/src
 git clone https://github.com/ros-drivers/flir_camera_driver
 cd ~/catkin_ws
 catkin_make
-sudo apt-get install 
 ```
 
