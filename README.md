@@ -68,7 +68,7 @@ rosdep update
 找到文件 sogoupinyin_xxx_amd64.deb (sogoupinyin_2.4.0.3469_amd64.deb)
 
 ```sh
-sudo -y apt-get install fcitx
+sudo apt-get -y install fcitx
 sudo dpkg -i sogoupinyin_2.4.0.3469_amd64.deb
 sudo apt -f install
 ```
@@ -179,7 +179,7 @@ echo "export MV_HAL_PLUGIN_PATH=$MV_HAL_PLUGIN_PATH":$LIB_INSTALL_PATH >> ~/.zsh
 ```
 
 #### Metvision
-
+18.04
 ```sh
 sudo su
 
@@ -189,6 +189,17 @@ echo "deb [arch=amd64 trusted=yes] https://prophesee:DbnLdKL5YXnMndWg@apt.prophe
     apt -y install 'metavision-*' && \
     apt -y install libboost-program-options-dev
 ```
+
+20.04
+```sh
+sudo su
+
+echo "deb [arch=amd64 trusted=yes] https://prophesee:DbnLdKL5YXnMndWg@apt.prophesee.ai/dists/public/cp51Vn3b/ubuntu focal essentials" > /etc/apt/sources.list.d/essentials.list && \
+    apt update && \
+    apt -y install libcanberra-gtk-module mesa-utils && \
+    apt -y install 'metavision-*' && \
+    apt -y install libboost-program-options-dev
+ ```
 
 之后重启 插上camera 运行 metvision_player 测试
 
