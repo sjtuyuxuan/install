@@ -304,6 +304,7 @@ sudo ln -s ~/libs/mtmanager/linux-x64/bin/mtmanager /usr/bin/
 #### 安装SDK
 
 ```sh
+sudo apt-get -y install python3-pip
 sudo pip3 install --upgrade pip
 python3 -m pip install ouster-sdk
 ```
@@ -324,6 +325,7 @@ make -j 4
 sudo apt install -y ros-$ROS_DISTRO-ros-core ros-$ROS_DISTRO-pcl-ros ros-$ROS_DISTRO-tf2-geometry-msgs ros-$ROS_DISTRO-rviz
 rosdep install --from-paths ~/libs/ouster_example
 ln -s ~/libs/ouster_example ~/catkin_ws/src/
+cd ~/catkin_ws
 catkin_make -DCMAKE_BUILD_TYPE=Release
 ```
 
@@ -339,7 +341,7 @@ roslaunch ouster_ros ouster.launch sensor_hostname:=192.168.1.2 udp_dest:=192.16
 
 ### Kinect Azure
 
-#### k4a-tools
+#### k4a-tools，libk4a预编译版本 仅限18.04
 
 https://docs.microsoft.com/zh-cn/azure/Kinect-dk/sensor-sdk-download
 
@@ -348,11 +350,6 @@ curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
 sudo apt-add-repository https://packages.microsoft.com/ubuntu/18.04/prod
 sudo apt-get update
 sudo apt-get install k4a-tools
-```
-
-#### libk4a预编译版本
-
-```
 sudo apt install libk4a1.4-dev
 ```
 
@@ -394,6 +391,7 @@ mkdir build && cd build
 cmake .. -GNinja
 ninja -j 8
 sudo ninja install
+sudo cp scripts/99-k4a.rules /etc/udev/rules.d/
 ```
 
 详见 https://github.com/microsoft/Azure-Kinect-Sensor-SDK
