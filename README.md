@@ -68,7 +68,7 @@ rosdep update
 找到文件 sogoupinyin_xxx_amd64.deb (sogoupinyin_2.4.0.3469_amd64.deb)
 
 ```sh
-sudo -y apt-get install fcitx
+sudo apt-get -y install fcitx
 sudo dpkg -i sogoupinyin_2.4.0.3469_amd64.deb
 sudo apt -f install
 ```
@@ -179,7 +179,7 @@ echo "export MV_HAL_PLUGIN_PATH=$MV_HAL_PLUGIN_PATH":$LIB_INSTALL_PATH >> ~/.zsh
 ```
 
 #### Metvision
-
+18.04
 ```sh
 sudo su
 
@@ -189,6 +189,17 @@ echo "deb [arch=amd64 trusted=yes] https://prophesee:DbnLdKL5YXnMndWg@apt.prophe
     apt -y install 'metavision-*' && \
     apt -y install libboost-program-options-dev
 ```
+
+20.04
+```sh
+sudo su
+
+echo "deb [arch=amd64 trusted=yes] https://prophesee:DbnLdKL5YXnMndWg@apt.prophesee.ai/dists/public/cp51Vn3b/ubuntu focal essentials" > /etc/apt/sources.list.d/essentials.list && \
+    apt update && \
+    apt -y install libcanberra-gtk-module mesa-utils && \
+    apt -y install 'metavision-*' && \
+    apt -y install libboost-program-options-dev
+ ```
 
 之后重启 插上camera 运行 metvision_player 测试
 
@@ -293,6 +304,7 @@ sudo ln -s ~/libs/mtmanager/linux-x64/bin/mtmanager /usr/bin/
 #### 安装SDK
 
 ```sh
+sudo apt-get -y install python3-pip
 sudo pip3 install --upgrade pip
 python3 -m pip install ouster-sdk
 ```
@@ -313,6 +325,7 @@ make -j 4
 sudo apt install -y ros-$ROS_DISTRO-ros-core ros-$ROS_DISTRO-pcl-ros ros-$ROS_DISTRO-tf2-geometry-msgs ros-$ROS_DISTRO-rviz
 rosdep install --from-paths ~/libs/ouster_example
 ln -s ~/libs/ouster_example ~/catkin_ws/src/
+cd ~/catkin_ws
 catkin_make -DCMAKE_BUILD_TYPE=Release
 ```
 
@@ -328,7 +341,7 @@ roslaunch ouster_ros ouster.launch sensor_hostname:=192.168.1.2 udp_dest:=192.16
 
 ### Kinect Azure
 
-#### k4a-tools
+#### k4a-tools，libk4a预编译版本 仅限18.04
 
 https://docs.microsoft.com/zh-cn/azure/Kinect-dk/sensor-sdk-download
 
@@ -337,11 +350,6 @@ curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
 sudo apt-add-repository https://packages.microsoft.com/ubuntu/18.04/prod
 sudo apt-get update
 sudo apt-get install k4a-tools
-```
-
-#### libk4a预编译版本
-
-```
 sudo apt install libk4a1.4-dev
 ```
 
@@ -383,6 +391,7 @@ mkdir build && cd build
 cmake .. -GNinja
 ninja -j 8
 sudo ninja install
+sudo cp scripts/99-k4a.rules /etc/udev/rules.d/
 ```
 
 详见 https://github.com/microsoft/Azure-Kinect-Sensor-SDK
