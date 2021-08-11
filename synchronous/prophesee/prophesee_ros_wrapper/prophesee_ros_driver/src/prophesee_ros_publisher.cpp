@@ -19,10 +19,7 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-PropheseeWrapperPublisher::PropheseeWrapperPublisher() :
-    nh_("~"),
-    biases_file_(""),
-    raw_file_to_read_("") {
+PropheseeWrapperPublisher::PropheseeWrapperPublisher() : nh_("~"), biases_file_(""), raw_file_to_read_("") {
     camera_name_ = "PropheseeCamera_optical_frame";
 
     // Load Parameters
@@ -37,16 +34,18 @@ PropheseeWrapperPublisher::PropheseeWrapperPublisher() :
 
     const std::string topic_cam_info        = "/prophesee/" + camera_name_ + "/camera_info";
     const std::string topic_cd_event_buffer = "/prophesee/" + camera_name_ + "/cd_events_buffer";
-    const std::string topic_cd_event_buffer_reconstructed = "/prophesee/" + camera_name_ + "/cd_events_buffer_reconstructed";
+    const std::string topic_cd_event_buffer_reconstructed =
+        "/prophesee/" + camera_name_ + "/cd_events_buffer_reconstructed";
 
     pub_info_ = nh_.advertise<sensor_msgs::CameraInfo>(topic_cam_info, 1);
 
-    if (publish_cd_){
-        if (trigger_reconstruct_) pub_cd_events_reconstructed_ = nh_.advertise<prophesee_event_msgs::EventArray>(topic_cd_event_buffer_reconstructed, 500);
-        else pub_cd_events_ = nh_.advertise<prophesee_event_msgs::EventArray>(topic_cd_event_buffer, 500);
+    if (publish_cd_) {
+        if (trigger_reconstruct_)
+            pub_cd_events_reconstructed_ =
+                nh_.advertise<prophesee_event_msgs::EventArray>(topic_cd_event_buffer_reconstructed, 500);
+        else
+            pub_cd_events_ = nh_.advertise<prophesee_event_msgs::EventArray>(topic_cd_event_buffer, 500);
     }
-
-    
 
     while (!openCamera()) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -58,7 +57,7 @@ PropheseeWrapperPublisher::PropheseeWrapperPublisher() :
 
     // Get the sensor config
     Metavision::CameraConfiguration config = camera_.get_camera_configuration();
-    auto &geometry                        = camera_.geometry();
+    auto &geometry                         = camera_.geometry();
     ROS_INFO("[CONF] Width:%i, Height:%i", geometry.width(), geometry.height());
     ROS_INFO("[CONF] Serial number: %s", config.serial_number.c_str());
 
@@ -81,10 +80,10 @@ bool PropheseeWrapperPublisher::openCamera() {
     try {
         if (raw_file_to_read_.empty()) {
             camera_ = Metavision::Camera::from_first_available();
-            if (trigger_reconstruct_){
-                Metavision::I_TriggerIn *i_trigger_in =
-                camera_.get_device().get_facility<Metavision::I_TriggerIn>();
-            if (!i_trigger_in->enable(0) && !i_trigger_in->enable(1)) ROS_ERROR("NOT SYNC SUCC");
+            if (trigger_reconstruct_) {
+                Metavision::I_TriggerIn *i_trigger_in = camera_.get_device().get_facility<Metavision::I_TriggerIn>();
+                if (!i_trigger_in->enable(0) && !i_trigger_in->enable(1))
+                    ROS_ERROR("NOT SYNC SUCC");
             }
             if (!biases_file_.empty()) {
                 ROS_INFO("[CONF] Loading bias file: %s", biases_file_.c_str());
@@ -108,7 +107,7 @@ void PropheseeWrapperPublisher::startPublishing() {
     if (publish_cd_)
         publishCDEvents();
 
-    if (trigger_reconstruct_) 
+    if (trigger_reconstruct_)
         publishExtTrigger();
 
     ros::Rate loop_rate(5);
@@ -125,88 +124,93 @@ void PropheseeWrapperPublisher::startPublishing() {
 void PropheseeWrapperPublisher::publishCDEvents() {
     // Initialize and publish a buffer of CD events
     try {
-        Metavision::CallbackId cd_callback =
-            camera_.cd().add_callback([this](const Metavision::EventCD *ev_begin, const Metavision::EventCD *ev_end) {
-                // Check the number of subscribers to the topic
-                if (pub_cd_events_.getNumSubscribers() <= 0 && pub_cd_events_reconstructed_.getNumSubscribers() <= 0)
-                    return;
+        Metavision::CallbackId cd_callback = camera_.cd().add_callback([this](const Metavision::EventCD *ev_begin,
+                                                                              const Metavision::EventCD *ev_end) {
+            // Check the number of subscribers to the topic
+            if (pub_cd_events_.getNumSubscribers() <= 0 && pub_cd_events_reconstructed_.getNumSubscribers() <= 0)
+                return;
 
-                if (ev_begin < ev_end) {
-                    // Compute the current local buffer size with new CD events
-                    const unsigned int buffer_size = ev_end - ev_begin;
+            if (ev_begin < ev_end) {
+                // Compute the current local buffer size with new CD events
+                const unsigned int buffer_size = ev_end - ev_begin;
 
-                    // Get the current time
-                    event_buffer_current_time_.fromNSec(start_timestamp_.toNSec() + (ev_begin->t * 1000.00));
+                // Get the current time
+                event_buffer_current_time_.fromNSec(start_timestamp_.toNSec() + (ev_begin->t * 1000.00));
 
-                    /** In case the buffer is empty we set the starting time stamp **/
-                    if (event_buffer_.empty()) {
-                        // Get starting time
-                        event_buffer_start_time_ = event_buffer_current_time_;
-                    }
-
-                    /** Insert the events to the buffer **/
-                    auto inserter = std::back_inserter(event_buffer_);
-
-                    /** When there is not activity filter **/
-                    std::copy(ev_begin, ev_end, inserter);
-
-                    /** Get the last time stamp **/
-                    event_buffer_current_time_.fromNSec(start_timestamp_.toNSec() + (ev_end - 1)->t * 1000.00);
+                /** In case the buffer is empty we set the starting time stamp **/
+                if (event_buffer_.empty()) {
+                    // Get starting time
+                    event_buffer_start_time_ = event_buffer_current_time_;
                 }
 
-                if ((event_buffer_current_time_ - event_buffer_start_time_) >= event_delta_t_) {
-                    /** Create the message **/
-                    prophesee_event_msgs::EventArray event_buffer_msg;
+                /** Insert the events to the buffer **/
+                auto inserter = std::back_inserter(event_buffer_);
 
-                    // Sensor geometry in header of the message
-                    event_buffer_msg.header.stamp = event_buffer_current_time_;
-                    event_buffer_msg.height       = camera_.geometry().height();
-                    event_buffer_msg.width        = camera_.geometry().width();
+                /** When there is not activity filter **/
+                std::copy(ev_begin, ev_end, inserter);
 
-                    /** Set the buffer size for the msg **/
-                    event_buffer_msg.events.resize(event_buffer_.size());
+                /** Get the last time stamp **/
+                event_buffer_current_time_.fromNSec(start_timestamp_.toNSec() + (ev_end - 1)->t * 1000.00);
+            }
 
-                    // Sync
-                    if (trigger_reconstruct_){
-                        if(has_started_) {
-                            auto buffer_msg_it_sync = event_buffer_msg.events.begin();
-                            for (const Metavision::EventCD *it = std::addressof(event_buffer_[0]);
-                                    it != std::addressof(event_buffer_[event_buffer_.size()]); ++it, ++buffer_msg_it_sync) {
-                                prophesee_event_msgs::Event &event = *buffer_msg_it_sync;
-                                event.x                            = it->x;
-                                event.y                            = it->y;
-                                event.polarity                     = it->p;
-                                event.ts.fromNSec((t_indexed_gt_ - t_current_internal_clock_ + it->t) * 1000);
-                            }
+            if ((event_buffer_current_time_ - event_buffer_start_time_) >= event_delta_t_) {
+                /** Create the message **/
+                prophesee_event_msgs::EventArray event_buffer_msg;
 
-                            // Publish the Sync message
-                            pub_cd_events_reconstructed_.publish(event_buffer_msg);
-                        } else {
-                            ROS_WARN("There is no trigger now!");
-                        }
-                    } else {
-                        // Copy the events to the ros buffer format
-                        auto buffer_msg_it = event_buffer_msg.events.begin();
+                // Sensor geometry in header of the message
+                event_buffer_msg.header.stamp = event_buffer_current_time_;
+                event_buffer_msg.height       = camera_.geometry().height();
+                event_buffer_msg.width        = camera_.geometry().width();
+
+                /** Set the buffer size for the msg **/
+                event_buffer_msg.events.resize(event_buffer_.size());
+
+                // Sync
+                if (trigger_reconstruct_) {
+                    if (has_started_) {
+                        auto buffer_msg_it_sync = event_buffer_msg.events.begin();
                         for (const Metavision::EventCD *it = std::addressof(event_buffer_[0]);
-                            it != std::addressof(event_buffer_[event_buffer_.size()]); ++it, ++buffer_msg_it) {
-                            prophesee_event_msgs::Event &event = *buffer_msg_it;
+                             it != std::addressof(event_buffer_[event_buffer_.size()]); ++it, ++buffer_msg_it_sync) {
+                            prophesee_event_msgs::Event &event = *buffer_msg_it_sync;
                             event.x                            = it->x;
                             event.y                            = it->y;
                             event.polarity                     = it->p;
-                            event.ts.fromNSec(start_timestamp_.toNSec() + (it->t * 1000.00));
+                            event.ts.fromNSec((t_indexed_gt_ - t_current_internal_clock_ + it->t) * 1000);
+                            // if to long no signal turn off sycn and warning
+                            if (it->t - t_current_internal_clock_ > trigger_separate_usec_ * 50) {
+                                has_started_  = false;
+                                t_indexed_gt_ = 0;
+                            }
                         }
 
-                        // Publish the message
-                        pub_cd_events_.publish(event_buffer_msg);
+                        // Publish the Sync message
+                        pub_cd_events_reconstructed_.publish(event_buffer_msg);
+                    } else {
+                        ROS_WARN("There is no trigger now!");
+                    }
+                } else {
+                    // Copy the events to the ros buffer format
+                    auto buffer_msg_it = event_buffer_msg.events.begin();
+                    for (const Metavision::EventCD *it = std::addressof(event_buffer_[0]);
+                         it != std::addressof(event_buffer_[event_buffer_.size()]); ++it, ++buffer_msg_it) {
+                        prophesee_event_msgs::Event &event = *buffer_msg_it;
+                        event.x                            = it->x;
+                        event.y                            = it->y;
+                        event.polarity                     = it->p;
+                        event.ts.fromNSec(start_timestamp_.toNSec() + (it->t * 1000.00));
                     }
 
-                    // Clean the buffer for the next itteration
-                    event_buffer_.clear();
-
-                    ROS_DEBUG("CD data available, buffer size: %d at time: %lui",
-                              static_cast<int>(event_buffer_msg.events.size()), event_buffer_msg.header.stamp.toNSec());
+                    // Publish the message
+                    pub_cd_events_.publish(event_buffer_msg);
                 }
-            });
+
+                // Clean the buffer for the next itteration
+                event_buffer_.clear();
+
+                ROS_DEBUG("CD data available, buffer size: %d at time: %lui",
+                          static_cast<int>(event_buffer_msg.events.size()), event_buffer_msg.header.stamp.toNSec());
+            }
+        });
         ROS_INFO("register cd callback with id %d", cd_callback);
     } catch (Metavision::CameraException &e) {
         ROS_WARN("%s", e.what());
@@ -214,20 +218,18 @@ void PropheseeWrapperPublisher::publishCDEvents() {
     }
 }
 
-
 void PropheseeWrapperPublisher::publishExtTrigger() {
     // Initialize and publish a buffer of CD events
     try {
-        Metavision::CallbackId ext_trigger_callback =
-            camera_.ext_trigger().add_callback([this](const Metavision::EventExtTrigger *begin, const Metavision::EventExtTrigger *end) {
-
+        Metavision::CallbackId ext_trigger_callback = camera_.ext_trigger().add_callback(
+            [this](const Metavision::EventExtTrigger *begin, const Metavision::EventExtTrigger *end) {
                 uint8_t *it_begin, *it_end;
-                it_begin = (uint8_t*) begin;
-                it_end = (uint8_t*) end;
+                it_begin = (uint8_t *)begin;
+                it_end   = (uint8_t *)end;
 
-                for (it_begin ; it_begin < it_end ; it_begin+=sizeof(Metavision::EventExtTrigger)) {
-                    auto it = reinterpret_cast<Metavision::EventExtTrigger*>(it_begin);
-                    if (it->p){
+                for (it_begin; it_begin < it_end; it_begin += sizeof(Metavision::EventExtTrigger)) {
+                    auto it = reinterpret_cast<Metavision::EventExtTrigger *>(it_begin);
+                    if (it->p) {
                         has_started_ = true;
                         t_indexed_gt_ += trigger_separate_usec_;
                         t_current_internal_clock_ = it->t;

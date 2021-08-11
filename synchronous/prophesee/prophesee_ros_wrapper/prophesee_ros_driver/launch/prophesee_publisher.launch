@@ -5,7 +5,7 @@
     <param name="publish_cd" value="true" />
 
     <!-- Path to the file with the camera settings -->
-    <param name="bias_file" value="/home/mpl/Documents/Prophesee/night309_gen4.bias"/>
+    <param name="bias_file" value="/home/yuxuan/Documents/Prophesee/out.bias"/>
 
     <!-- Instead of live camera, you can read data offline from raw file -->
     <param name="raw_file_to_read" value="" />

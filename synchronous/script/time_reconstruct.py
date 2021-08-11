@@ -16,11 +16,12 @@ import rosbag
 import gnupg
 
 LIDAR_HZ = 100
+IMU_HZ = 100
 
 def Parse():
     parser = argparse.ArgumentParser(description='config_io')
     parser.add_argument("-o", "--output", type=str,
-                        help='set output path', default="temp.bag")
+                        help='set output path', default="_processed.bag")
     parser.add_argument("-i", "--input", type=str,
                         help='set input path')
     parser.add_argument('--imu',type=str, help="Set IMU topic", default="/imu/data")
@@ -50,12 +51,15 @@ def main():
 
     imu_started_unix_time = 0
     imu_started = False
+    imu_count = 0
 
     rgbl_temp_t = 0
 
+    out_path = args.output
+    if out_path == "_processed.bag":
+        out_path = args.input [:-4] + args.output
 
-
-    with rosbag.Bag(args.output, 'w') as bag_out:
+    with rosbag.Bag(out_path, 'w') as bag_out:
         for topic, msg, t in bag_in.read_messages():
             if topic == args.lidar:
                 if not lidar_started:
@@ -88,13 +92,14 @@ def main():
                         buffer[0].append([time_diff, msg, args.lidar])
 
             elif topic == args.imu:
-                rgbl_temp_t = msg.header.stamp.to_sec()
                 if not imu_started:
-                    imu_started_unix_time = rgbl_temp_t
+                    imu_started_unix_time = msg.header.stamp.to_sec()
                     for pc in buffer[0]:
-                        pc[0] = pc[0] + imu_started_unix_time
+                        pc[0] += imu_started_unix_time
                     imu_started = True
+                rgbl_temp_t = imu_count / IMU_HZ + imu_started_unix_time
                 buffer[1].append([rgbl_temp_t, msg, args.imu])
+                imu_count += 1 
                 
 
             elif topic == args.rgbl:
@@ -115,3 +120,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
