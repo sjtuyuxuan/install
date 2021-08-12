@@ -7,7 +7,7 @@
       {
         "name": "Mac",
         "intelliSenseMode": "clang-x64",
-        "includePath": ["${myDefaultIncludePath}", "/usr/include","${workspaceFolder}/include/**","/opt/ros/melodic/include","~/catkin_ws/devel/include"],
+        "includePath": ["${myDefaultIncludePath}", "/usr/include","${workspaceFolder}/include/**","/opt/ros/melodic/include/**","~/catkin_ws/devel/include"],
         "defines": ["FOO", "BAR=100"],
         "compilerPath": "/usr/bin/clang",
         "cStandard": "c11",

@@ -59,7 +59,12 @@
         "set": "cpp",
         "string": "cpp",
         "string_view": "cpp",
-        "typeindex": "cpp"
+        "typeindex": "cpp",
+        "csignal": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "forward_list": "cpp",
+        "unordered_set": "cpp"
     },
     "python.autoComplete.extraPaths": [
         "/home/yuxuan/catkin_ws/devel/lib/python2.7/dist-packages",

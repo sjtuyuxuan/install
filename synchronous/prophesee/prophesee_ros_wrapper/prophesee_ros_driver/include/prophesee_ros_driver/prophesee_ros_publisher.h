@@ -36,7 +36,7 @@ private:
     void publishCDEvents();
 
     /// \brief Publishes ExtTrigger
-    void publishExtTrigger();
+    void extTriggerCallBack();
 
     /// \brief Node handler - the access point to communication with ROS
     ros::NodeHandle nh_;
@@ -46,9 +46,6 @@ private:
 
     /// \brief Publisher for CD events
     ros::Publisher pub_cd_events_;
-
-    /// \brief Publisher for CD events reconstructed
-    ros::Publisher pub_cd_events_reconstructed_;
 
     /// \brief Instance of Camera class
     ///
@@ -65,9 +62,9 @@ private:
     /// Accumulated t when sync is used
     Metavision::timestamp t_indexed_gt_ = 0;
 
-    /// \brief Instance of t_current_
+    /// \brief Instance of trigger flag
     ///
-    /// Accumulated t when sync is used
+    /// Check wether external trigger is starated
     bool has_started_ = false;
 
     /// \brief Instance of t_current_
@@ -93,10 +90,10 @@ private:
     /// \brief If showing CD events
     bool publish_cd_;
 
-    /// \brief If usingreconstruct CD events
+    /// \brief If using reconstruct CD events with EXT trigger
     bool trigger_reconstruct_;
 
-    /// \brief If usingreconstruct CD events
+    /// \brief Time interval between two rising edge of EXT trigger in microseconds
     int trigger_separate_usec_;
 
     /// \brief Activity Filter Temporal depth (configuration)
