@@ -179,7 +179,13 @@ void PropheseeWrapperStereoPublisher::publishCDEvents(Metavision::Camera & camer
         event_buffer_msg.events.resize(buffer_size);
 
         // Header Timestamp of the message
-        event_buffer_msg.header.stamp.fromNSec(start_timestamp_.toNSec() + (ev_begin->t * 1000.00));
+        if (!trigger_reconstruct_){
+          event_buffer_msg.header.stamp.fromNSec(start_timestamp_.toNSec() + (ev_begin->t * 1000.00));
+        } else {
+          event_buffer_msg.header.stamp.fromNSec(
+              t_indexed_gt_ + ev_begin->t > t_current_internal_clock_ ?
+                  (t_indexed_gt_ - t_current_internal_clock_ + ev_begin->t) * 1000 : 0);
+        }
 
         // Sensor geometry in header of the message
         event_buffer_msg.height = unsigned(camera.geometry().height());
@@ -187,8 +193,9 @@ void PropheseeWrapperStereoPublisher::publishCDEvents(Metavision::Camera & camer
 
         // if to long time no signal or not started turn off sycn and warning
         if (trigger_reconstruct_ && (!has_started_ ||
-            ev_begin->t - t_current_internal_clock_ > trigger_separate_usec_ * 50)) {
-          has_started_  = false;
+                                     ev_begin->t > t_current_internal_clock_ + trigger_separate_usec_ * 50))
+        {
+          has_started_ = false;
           t_indexed_gt_ = 0;
           ROS_WARN("There is no trigger now! Please Check");
           return;
@@ -202,7 +209,10 @@ void PropheseeWrapperStereoPublisher::publishCDEvents(Metavision::Camera & camer
           event.y = it->y;
           event.polarity = it->p;
           if (!trigger_reconstruct_) event.ts.fromNSec(start_timestamp_.toNSec() + (it->t * 1000.00));
-          else event.ts.fromNSec((t_indexed_gt_ - t_current_internal_clock_ + it->t) * 1000);
+          else {
+            if (t_indexed_gt_ + it->t > t_current_internal_clock_)
+                event.ts.fromNSec((t_indexed_gt_ - t_current_internal_clock_ + it->t) * 1000);
+          }
         }
 
         // Publish the message
@@ -212,6 +222,7 @@ void PropheseeWrapperStereoPublisher::publishCDEvents(Metavision::Camera & camer
       }
     };
     [[gnu::unused]] Metavision::CallbackId cd_callback_ = camera.cd().add_callback(cd_callback_fun);
+    ROS_INFO("register left camera cd callback with id %d", cd_callback_);
   } catch (Metavision::CameraException &e) {
     ROS_WARN("%s", e.what());
     publish_cd_ = false;
@@ -233,7 +244,7 @@ void PropheseeWrapperStereoPublisher::extTriggerCallBack() {
           }
         }
       });
-    ROS_INFO("register ext_trigger callback with id %d", ext_trigger_callback);
+    ROS_INFO("register left camera ext_trigger callback with id %d", ext_trigger_callback);
   } catch (Metavision::CameraException &e) {
     ROS_WARN("%s", e.what());
     publish_cd_ = false;
