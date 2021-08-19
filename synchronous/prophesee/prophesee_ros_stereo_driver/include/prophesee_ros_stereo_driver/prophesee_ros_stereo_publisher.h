@@ -11,6 +11,7 @@
 
 #include <metavision/sdk/driver/camera.h>
 #include <metavision/hal/facilities/i_trigger_in.h>
+#include <metavision/hal/facilities/i_device_control.h>
 
 #include "ros/ros.h"
 

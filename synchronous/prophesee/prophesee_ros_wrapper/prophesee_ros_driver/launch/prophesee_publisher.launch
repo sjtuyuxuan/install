@@ -5,11 +5,12 @@
     <param name="publish_cd" value="true" />
 
     <!-- Path to the file with the camera settings -->
-    <param name="bias_file" value="/home/yuxuan/Documents/Prophesee/out.bias"/>
+    <param name="bias_file" value="/home/mpl/Documents/Prophesee/out.bias"/>
 
     <!-- Instead of live camera, you can read data offline from raw file -->
     <param name="raw_file_to_read" value="" />
 
+    <!-- Instead of internal clock, you can use external trigger. Note that the time stamp is form 0 when trigger started and only rising edge is considered -->
     <param name="trigger_reconstruct" value="true" />
     <param name="trigger_separate_usec" value="5000" />
 

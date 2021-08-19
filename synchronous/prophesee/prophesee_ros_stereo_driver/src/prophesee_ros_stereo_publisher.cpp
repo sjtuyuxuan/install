@@ -103,20 +103,35 @@ PropheseeWrapperStereoPublisher::~PropheseeWrapperStereoPublisher() {
 
 bool PropheseeWrapperStereoPublisher::openCamera(Metavision::Camera & camera) {
   bool camera_is_opened = false;
-
   // Initialize the camera instance
   try {
     if(&camera==&camera_left){
       camera = Metavision::Camera::from_serial(left_camera_id);
+      Metavision::I_DeviceControl * i_device_control = camera.get_device().get_facility<Metavision::I_DeviceControl>();
       ROS_INFO("Left camera was opened successfully");
+      if (master_left_){
+        if (i_device_control->set_mode_master())ROS_INFO("Left camera was opened as Master mode successfully");
+        else ROS_ERROR("Left camera was UNABLE to open as Master mode!");
+      } else {
+        if (i_device_control->set_mode_slave()) ROS_INFO("Left camera was opened as Slave mode successfully");
+        else ROS_ERROR("Left camera was UNABLE to open as Slave mode!");
+      }
+    } else if (&camera==&camera_right) {
+      camera = Metavision::Camera::from_serial(right_camera_id);
+      Metavision::I_DeviceControl * i_device_control = camera.get_device().get_facility<Metavision::I_DeviceControl>();
+      ROS_INFO("Right Camera was opened successfully");
+      if (master_left_){
+        if (i_device_control->set_mode_slave()) ROS_INFO("Right camera was opened as Slave mode successfully");
+        else ROS_ERROR("Right camera was UNABLE to open as Slave mode!");
+      } else {
+        if (i_device_control->set_mode_master())ROS_INFO("Right camera was opened as Master mode successfully");
+        else ROS_ERROR("Right camera was UNABLE to open as Master mode!");
+      }
       if (trigger_reconstruct_) {
         Metavision::I_TriggerIn *i_trigger_in = camera.get_device().get_facility<Metavision::I_TriggerIn>();
         if (!i_trigger_in->enable(0) && !i_trigger_in->enable(1)) ROS_WARN("Left camera NOT SYNC SUCC");
         else ROS_INFO("Left camera was opened external trigger mode successfully");
       }
-    } else if (&camera==&camera_right) {
-      camera = Metavision::Camera::from_serial(right_camera_id);
-      ROS_INFO("Right Camera was opened successfully");
     } else {
       ROS_WARN("Invalid camera Reference in call to PropheseeWrapperStereoPublisher::openCamera");
     }
@@ -132,15 +147,8 @@ bool PropheseeWrapperStereoPublisher::openCamera(Metavision::Camera & camera) {
 }
 
 void PropheseeWrapperStereoPublisher::startPublishing() {
-  camera_left.start();
   camera_right.start();
-  if(master_left_) {
-    Metavision::Camera::synchronize_and_start_cameras(camera_left,camera_right);
-    ROS_INFO("[CONF] The Cameras have been synchronized with the left camera being the master");
-  } else {
-    Metavision::Camera::synchronize_and_start_cameras(camera_right,camera_left);
-    ROS_INFO("[CONF] The Cameras have been synchronized with the right camera being the master");
-  }
+  camera_left.start();
 
   start_timestamp_ = ros::Time::now();
   ROS_INFO("Timestamp is %d seconds and %d nanoseconds",start_timestamp_.sec,start_timestamp_.nsec);
@@ -222,7 +230,7 @@ void PropheseeWrapperStereoPublisher::publishCDEvents(Metavision::Camera & camer
       }
     };
     [[gnu::unused]] Metavision::CallbackId cd_callback_ = camera.cd().add_callback(cd_callback_fun);
-    ROS_INFO("register left camera cd callback with id %d", cd_callback_);
+    ROS_INFO("register camera cd callback with id %d", cd_callback_);
   } catch (Metavision::CameraException &e) {
     ROS_WARN("%s", e.what());
     publish_cd_ = false;
@@ -232,7 +240,7 @@ void PropheseeWrapperStereoPublisher::publishCDEvents(Metavision::Camera & camer
 void PropheseeWrapperStereoPublisher::extTriggerCallBack() {
   // Initialize and publish a buffer of CD events
   try {
-    Metavision::CallbackId ext_trigger_callback = camera_left.ext_trigger().add_callback(
+    Metavision::CallbackId ext_trigger_callback = camera_right.ext_trigger().add_callback(
       [this](const Metavision::EventExtTrigger *begin, const Metavision::EventExtTrigger *end) {
         auto it_begin = begin;
         auto it_end   = end;
@@ -244,7 +252,7 @@ void PropheseeWrapperStereoPublisher::extTriggerCallBack() {
           }
         }
       });
-    ROS_INFO("register left camera ext_trigger callback with id %d", ext_trigger_callback);
+    ROS_INFO("register camera ext_trigger callback with id %d", ext_trigger_callback);
   } catch (Metavision::CameraException &e) {
     ROS_WARN("%s", e.what());
     publish_cd_ = false;

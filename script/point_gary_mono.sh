@@ -15,11 +15,11 @@ do
 done
 if [ $framerate ];
     then
-    roslaunch $script_dir/camera.launch frame_rate:=$framerate
+    roslaunch $script_dir/camera_mono.launch frame_rate:=$framerate
 elif [ $sycn ];
     then
-    roslaunch $script_dir/camera.launch control_frame_rate:=false enable_trigger:=On
+    roslaunch $script_dir/camera_mono.launch control_frame_rate:=false enable_trigger:=On
 else
-    roslaunch $script_dir/camera.launch
+    roslaunch $script_dir/camera_mono.launch
 fi
 

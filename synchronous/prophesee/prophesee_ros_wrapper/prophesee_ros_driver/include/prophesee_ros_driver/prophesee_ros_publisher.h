@@ -9,8 +9,6 @@
 
 #include <sensor_msgs/CameraInfo.h>
 
-#include <deque>
-
 #include <metavision/sdk/driver/camera.h>
 #include <metavision/hal/facilities/i_trigger_in.h>
 

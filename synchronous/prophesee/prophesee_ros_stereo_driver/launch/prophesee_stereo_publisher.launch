@@ -1,16 +1,16 @@
 <launch>
   <node pkg="prophesee_ros_stereo_driver" type="prophesee_ros_stereo_publisher" name="prophesee_ros_stereo_publisher" respawn="false" output="screen" >
     <param name="camera_name" value="camera" />
-    <param name="left_camera_id" type="string" value="00002400" />
-    <param name="right_camera_id" type="string" value="00002402" />
+    <param name="left_camera_id" type="string" value="CenturyArks:evc3a_plugin_gen31:0000000000000064" />
+    <param name="right_camera_id" type="string" value="CenturyArks:evc3a_plugin_gen31:0000000000000112" />
     <param name="master_left" value="true" />
     <param name="publish_cd" value="true" />
 
     <!-- Open External Trigger -->
-    <param name="trigger_reconstruct_" value="false" />
-    <param name="trigger_separate_usec_" value="5000" />
+    <param name="trigger_reconstruct" value="true" />
+    <param name="trigger_separate_usec" value="5000" />
 
     <!-- Path to the file with the camera settings -->
-    <param name="bias_file" value="" />
+    <param name="bias_file" value="/home/mpl/Documents/Prophesee/out.bias" />
   </node>
 </launch>

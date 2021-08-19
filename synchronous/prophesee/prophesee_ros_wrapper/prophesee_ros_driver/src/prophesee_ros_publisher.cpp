@@ -19,7 +19,10 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-PropheseeWrapperPublisher::PropheseeWrapperPublisher() : nh_("~"), biases_file_(""), raw_file_to_read_("") {
+PropheseeWrapperPublisher::PropheseeWrapperPublisher() :
+    nh_("~"),
+    biases_file_(""),
+    raw_file_to_read_("") {
     camera_name_ = "PropheseeCamera_optical_frame";
 
     // Load Parameters
@@ -56,7 +59,7 @@ PropheseeWrapperPublisher::PropheseeWrapperPublisher() : nh_("~"), biases_file_(
 
     // Get the sensor config
     Metavision::CameraConfiguration config = camera_.get_camera_configuration();
-    auto &geometry                         = camera_.geometry();
+    auto &geometry                        = camera_.geometry();
     ROS_INFO("[CONF] Width:%i, Height:%i", geometry.width(), geometry.height());
     ROS_INFO("[CONF] Serial number: %s", config.serial_number.c_str());
 
@@ -153,25 +156,39 @@ void PropheseeWrapperPublisher::publishCDEvents() {
                 }
 
                 if ((event_buffer_current_time_ - event_buffer_start_time_) >= event_delta_t_) {
+
+                    // if to long time no signal or not started turn off sycn and warning
+                    Metavision::EventCD *buffer_head = std::addressof(event_buffer_[0]);
+                    if (trigger_reconstruct_) {
+                        if (!has_started_) {
+                            ROS_WARN("There is no trigger now! Please Check");
+                            event_buffer_.clear();
+                            return;
+                        } else if (buffer_head->t - t_current_internal_clock_ > trigger_separate_usec_ * 50) {
+                            ROS_WARN("There is no trigger now! Please Check");
+                            has_started_  = false;
+                            t_indexed_gt_ = 0;
+                            event_buffer_.clear();
+                            return;
+                        }
+                    }
+                    
                     /** Create the message **/
                     prophesee_event_msgs::EventArray event_buffer_msg;
 
                     // Sensor geometry in header of the message
-                    event_buffer_msg.header.stamp = event_buffer_current_time_;
+                    if (trigger_reconstruct_){
+                        if (buffer_head->t + t_indexed_gt_ > t_current_internal_clock_)
+                            event_buffer_msg.header.stamp.fromNSec((t_indexed_gt_ - t_current_internal_clock_ + buffer_head->t) * 1000);
+                        else event_buffer_msg.header.stamp.fromNSec(0);
+                    } else {
+                        event_buffer_msg.header.stamp = event_buffer_current_time_;
+                    }
                     event_buffer_msg.height       = camera_.geometry().height();
                     event_buffer_msg.width        = camera_.geometry().width();
 
                     /** Set the buffer size for the msg **/
                     event_buffer_msg.events.resize(event_buffer_.size());
-
-                    // if to long time no signal or not started turn off sycn and warning
-                    if (trigger_reconstruct_ &&
-                        (!has_started_ || ev_begin->t - t_current_internal_clock_ > trigger_separate_usec_ * 50)) {
-                        has_started_  = false;
-                        t_indexed_gt_ = 0;
-                        ROS_WARN("There is no trigger now! Please Check");
-                        return;
-                    }
 
                     // Copy the events to the ros buffer format
                     auto buffer_msg_it = event_buffer_msg.events.begin();
@@ -183,8 +200,10 @@ void PropheseeWrapperPublisher::publishCDEvents() {
                         event.polarity                     = it->p;
                         if (!trigger_reconstruct_)
                             event.ts.fromNSec(start_timestamp_.toNSec() + (it->t * 1000.00));
-                        else
+                        else{
+                            if (it->t + t_indexed_gt_ > t_current_internal_clock_)
                             event.ts.fromNSec((t_indexed_gt_ - t_current_internal_clock_ + it->t) * 1000);
+                        }
                     }
 
                     // Publish the message
@@ -209,12 +228,7 @@ void PropheseeWrapperPublisher::extTriggerCallBack() {
     try {
         Metavision::CallbackId ext_trigger_callback = camera_.ext_trigger().add_callback(
             [this](const Metavision::EventExtTrigger *begin, const Metavision::EventExtTrigger *end) {
-                uint8_t *it_begin, *it_end;
-                it_begin = (uint8_t *)begin;
-                it_end   = (uint8_t *)end;
-
-                for (it_begin; it_begin < it_end; it_begin += sizeof(Metavision::EventExtTrigger)) {
-                    auto it = reinterpret_cast<Metavision::EventExtTrigger *>(it_begin);
+                for (const Metavision::EventExtTrigger* it = begin; it < end; it ++) {
                     if (it->p) {
                         has_started_ = true;
                         t_indexed_gt_ += trigger_separate_usec_;
